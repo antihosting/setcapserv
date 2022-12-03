@@ -1,0 +1,2 @@
+# setcapserv
+setcap server daemon 
