@@ -193,12 +193,12 @@ func (t *watchDaemon) runCommands() {
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			t.log.Printf("Error: %v, %v\n", cmd, err)
-			t.log.Println(output)
+			t.log.Println(string(output))
 			return
 		}
 
 		t.log.Printf("%v\n", cmd)
-		t.log.Println(output)
+		t.log.Println(string(output))
 
 	}
 
