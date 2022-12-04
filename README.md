@@ -13,7 +13,7 @@ This daemon could be run in root, especially for setcap command.
 
 ### Usage
 
-The special string `%1` is using as command expression and would be replaced by actual watching file.
+The special string `%1` is using in command line expression and would be replaced by the actual watching file.
 
 In order to start daemon you need to run:
 
