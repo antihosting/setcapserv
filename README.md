@@ -42,7 +42,7 @@ Example of setcap and restart under root permissions:
 sudo ./trd -c "setcap CAP_NET_BIND_SERVICE=+eip %1" -c "%1 restart" /my/path/service_linux
 ```
 
-Commands would be executed in the sequence as in command line.
+Commands would be executed in the same sequence as in command line.
 
 
 
