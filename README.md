@@ -39,7 +39,7 @@ Example of unpacking executable under user permissions:
 
 Example of setcap and restart under root permissions:
 ```
-./trd -c "setcap CAP_NET_BIND_SERVICE=+eip %1" -c "%1 restart" /my/path/service_linux
+sudo ./trd -c "setcap CAP_NET_BIND_SERVICE=+eip %1" -c "%1 restart" /my/path/service_linux
 ```
 
 Commands would be executed in the sequence as in command line.
