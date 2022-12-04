@@ -85,6 +85,8 @@ func doRun(args []string) error {
 		"INFO: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
+	log.SetPrefix(fmt.Sprintf("PID %d ", os.Getpid()))
+
 	log.Printf("TRD %s %s\n", Version, Build)
 	log.Printf("Watch File: %s\n", watchFilePath)
 	log.Printf("Verbose: %v\n", *Verbose)

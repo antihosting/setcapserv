@@ -86,12 +86,6 @@ func (t *watchDaemon) Run(ctx context.Context) (err error) {
 
 	defer t.watcher.Close()
 
-	err = t.watcher.Add(t.watchFilePath)
-	if err != nil {
-		t.log.Printf("Watcher: can not add file '%s' to watcher, %v", t.watchFilePath, err)
-		return
-	}
-
 	watchFileDir := filepath.Dir(t.watchFilePath)
 	err = t.watcher.Add(watchFileDir)
 	if err != nil {
@@ -169,14 +163,14 @@ func (t *watchDaemon) trigger() {
 				t.log.Printf("Trigger: file locked '%s'\n", t.watchFilePath)
 				t.trigger()
 			} else {
-				t.log.Printf("Deploy: file '%s'\n", t.watchFilePath)
-				t.deploy()
+				t.log.Printf("Run: file '%s'\n", t.watchFilePath)
+				t.runCommands()
 			}
 		}
 	})
 }
 
-func (t *watchDaemon) deploy() {
+func (t *watchDaemon) runCommands() {
 
 	for _, command := range t.commands {
 
@@ -197,11 +191,13 @@ func (t *watchDaemon) deploy() {
 		cmd := exec.Command(args[0], args[1:]...)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			t.log.Printf("RunCommand: error '%v', output '%s', %v\n", cmd, output, err)
+			t.log.Printf("Error: %v, %v\n", cmd, err)
+			t.log.Println(output)
 			return
 		}
 
-		t.log.Printf("RunCommand: success '%v', output '%s'\n", cmd, output)
+		t.log.Printf("%v\n", cmd)
+		t.log.Println(output)
 
 	}
 
