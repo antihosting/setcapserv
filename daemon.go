@@ -23,30 +23,29 @@ const (
 )
 
 type watchDaemon struct {
+	watchFilePath string
+	commands      [][]string
 
-	watchFilePath  string
-	commands       [][]string
+	log     *log.Logger
+	verbose bool
 
-	log  *log.Logger
-	verbose  bool
+	last atomic.Value // struct watchFileInfo
 
-	last    atomic.Value // struct watchFileInfo
-
-	watcher      *fsnotify.Watcher
-	triggerTime  atomic.Int64
+	watcher     *fsnotify.Watcher
+	triggerTime atomic.Int64
 }
 
 type watchFileInfo struct {
-	Size  int64
-	ModTime  time.Time
+	Size    int64
+	ModTime time.Time
 }
 
-func NewDeamon(watchFilePath string, commands [][]string, log  *log.Logger, verbose  bool) *watchDaemon {
-	return &watchDaemon {
+func NewDeamon(watchFilePath string, commands [][]string, log *log.Logger, verbose bool) *watchDaemon {
+	return &watchDaemon{
 		watchFilePath: watchFilePath,
-		commands: commands,
-		log: log,
-		verbose: verbose,
+		commands:      commands,
+		log:           log,
+		verbose:       verbose,
 	}
 }
 
@@ -63,7 +62,7 @@ func (t *watchDaemon) Run(ctx context.Context) (err error) {
 
 	if stat, err := os.Stat(t.watchFilePath); err == nil {
 		t.last.Store(watchFileInfo{
-			Size: stat.Size(),
+			Size:    stat.Size(),
 			ModTime: stat.ModTime(),
 		})
 		if t.verbose {
@@ -72,7 +71,7 @@ func (t *watchDaemon) Run(ctx context.Context) (err error) {
 	} else {
 		// file not exist yet
 		t.last.Store(watchFileInfo{
-			Size: 0,
+			Size:    0,
 			ModTime: time.Unix(0, 0),
 		})
 		if t.verbose {
@@ -116,7 +115,6 @@ func (t *watchDaemon) Run(ctx context.Context) (err error) {
 		}
 	}
 
-
 }
 
 func (t *watchDaemon) onEvent(event fsnotify.Event) {
@@ -125,12 +123,12 @@ func (t *watchDaemon) onEvent(event fsnotify.Event) {
 		t.log.Printf("Watcher: event '%s'\n", event.String())
 	}
 
+	if t.watchFilePath != event.Name {
+		return
+	}
+
 	if event.Op == fsnotify.Create || event.Op == fsnotify.Write {
 
-		if t.watchFilePath != event.Name {
-			t.log.Printf("Watcher: nnexpected event '%s'\n", event.Name)
-			return
-		}
 		stat, err := os.Stat(event.Name)
 		if err != nil {
 			t.log.Printf("Watcher: file not found '%s', %v\n", event.Name, err)
@@ -146,11 +144,13 @@ func (t *watchDaemon) onEvent(event fsnotify.Event) {
 		if ls.Size != stat.Size() || ls.ModTime != stat.ModTime() {
 
 			t.last.Store(watchFileInfo{
-				Size: stat.Size(),
+				Size:    stat.Size(),
 				ModTime: stat.ModTime(),
 			})
 
-			t.log.Printf("Watcher: file changed '%s'\n", event.Name)
+			if t.verbose {
+				t.log.Printf("Trigger: file changed '%s'\n", event.Name)
+			}
 			t.trigger()
 
 		}
@@ -162,13 +162,14 @@ func (t *watchDaemon) onEvent(event fsnotify.Event) {
 func (t *watchDaemon) trigger() {
 	current := time.Now().UnixNano()
 	t.triggerTime.Store(current)
-	time.AfterFunc(10 * time.Millisecond, func() {
+	time.AfterFunc(time.Second, func() {
 		if t.triggerTime.Load() == current {
 			if isFileLocked(t.watchFilePath) {
 				// try to update again
-				t.log.Printf("Watcher: file locked '%s'\n", t.watchFilePath)
+				t.log.Printf("Trigger: file locked '%s'\n", t.watchFilePath)
 				t.trigger()
 			} else {
+				t.log.Printf("Deploy: file '%s'\n", t.watchFilePath)
 				t.deploy()
 			}
 		}

@@ -9,13 +9,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"os/user"
 	rt "runtime"
-	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -85,7 +85,7 @@ func doRun(args []string) error {
 		"INFO: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
-	log.Printf("Setcapserv %s %s\n", Version, Build)
+	log.Printf("TRD %s %s\n", Version, Build)
 	log.Printf("Watch File: %s\n", watchFilePath)
 	log.Printf("Verbose: %v\n", *Verbose)
 
@@ -114,7 +114,6 @@ func isRoot() (bool, error) {
 	}
 	return currentUser.Username == "root", nil
 }
-
 
 func startBackground(verbose bool) error {
 
@@ -166,4 +165,3 @@ func splitAndTrim(arr []string) [][]string {
 	}
 	return out
 }
-
