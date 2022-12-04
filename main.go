@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path/filepath"
 	rt "runtime"
 	"strings"
 )
@@ -49,10 +50,14 @@ func doRun(args []string) error {
 
 	if len(args) == 0 {
 		flag.PrintDefaults()
-		return errors.New("Usage: sudo ./autoupdate [flags] file_path")
+		return errors.New("Usage: sudo ./trd [flags] file_path")
 	}
 
-	watchFilePath := args[0]
+	watchFilePath, err := filepath.Abs(args[0])
+	if err != nil {
+		return err
+	}
+	watchFileDir := filepath.Dir(watchFilePath)
 
 	if len(Commands) == 0 {
 		return errors.New("empty commands")
@@ -63,6 +68,7 @@ func doRun(args []string) error {
 		return startBackground(watchFilePath)
 	}
 
+	var logFilePath, logFileDir string
 	var logFile *os.File
 	var logWriter io.Writer
 
@@ -71,8 +77,18 @@ func doRun(args []string) error {
 	} else if *LogFile == "stderr" {
 		logWriter = os.Stderr
 	} else {
-		var err error
-		logFile, err = os.OpenFile(*LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFilePath, err = filepath.Abs(*LogFile)
+		if err != nil {
+			return err
+		}
+		logFileDir = filepath.Dir(logFilePath)
+
+		err = os.MkdirAll(logFileDir, 0775)
+		if err != nil {
+			return err
+		}
+
+		logFile, err = os.OpenFile(*LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0664)
 		if err != nil {
 			return errors.Errorf("fail to open file '%s', %v", *LogFile, err)
 		}
@@ -93,6 +109,15 @@ func doRun(args []string) error {
 	log.Printf("TRD %s %s\n", Version, Build)
 	log.Printf("Watch File: %s\n", watchFilePath)
 	log.Printf("Verbose: %v\n", *Verbose)
+
+	log.Printf("WatchFileDir: %s\n", watchFileDir)
+	log.Printf("LogFileDir: %s\n", logFileDir)
+
+	if watchFileDir == logFileDir {
+		msg := fmt.Sprintf("watch path can not be equal log path '%s'", logFileDir)
+		log.Printf("Error: %s\n", msg)
+		return errors.New(msg)
+	}
 
 	commands := splitAndTrim(Commands)
 	log.Printf("Commands: %v\n", commands)

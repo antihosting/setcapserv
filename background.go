@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -20,9 +21,18 @@ func startBackground(filename string) error {
 		return err
 	}
 
+	logFile := *LogFile
+	if logFile == "" || logFile == "stdout" || logFile == "stderr" {
+		logFile, err = getDefaultLogFile(executable)
+		if err != nil {
+			return err
+		}
+	}
+
 	args := []string{
 		"-f",
-		"-log", executable + ".log",
+		"-log", logFile,
+		"-d", (*Delay).String(),
 	}
 
 	if *Verbose {
@@ -44,6 +54,33 @@ func startBackground(filename string) error {
 
 	fmt.Println("Daemon started in background. PID is : ", cmd.Process.Pid)
 	return nil
+}
+
+func getDefaultLogFile(executable string) (string, error) {
+
+	fileName := filepath.Base(executable)
+
+	executableDir, err := filepath.Abs(filepath.Dir(executable))
+	if err != nil {
+		return "", err
+	}
+
+	var applicationDir string
+	if filepath.Base(executableDir) == "bin" {
+		applicationDir, err = filepath.Abs(filepath.Dir(executableDir))
+		if err != nil {
+			return "", err
+		}
+	} else {
+		applicationDir, err = filepath.Abs(executableDir)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	logFileDir := filepath.Join(applicationDir, "log")
+	return filepath.Join(logFileDir, fmt.Sprintf("%s.log", fileName)), nil
+
 }
 
 func formatCommand(exe string, args []string) string {

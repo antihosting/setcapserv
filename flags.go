@@ -8,6 +8,7 @@ package main
 
 import (
 	"flag"
+	"time"
 )
 
 type ArrayListFlag []string
@@ -27,6 +28,8 @@ var (
 	Verbose    = flag.Bool("v", false, "Print logs and debug information")
 	Foreground = flag.Bool("f", false, "Indicator that daemon is running in foreground")
 	LogFile    = flag.String("log", "stdout", "Write log to file, stdout, stderr")
+
+	Delay      = flag.Duration("d", 3*time.Second, "Delay on update after last event")
 )
 
 func init() {

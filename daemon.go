@@ -156,7 +156,7 @@ func (t *watchDaemon) onEvent(event fsnotify.Event) {
 func (t *watchDaemon) trigger() {
 	current := time.Now().UnixNano()
 	t.triggerTime.Store(current)
-	time.AfterFunc(time.Second, func() {
+	time.AfterFunc(*Delay, func() {
 		if t.triggerTime.Load() == current {
 			if isFileLocked(t.watchFilePath) {
 				// try to update again
