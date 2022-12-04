@@ -13,7 +13,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"os/user"
 	rt "runtime"
 	"strings"
@@ -55,9 +54,13 @@ func doRun(args []string) error {
 
 	watchFilePath := args[0]
 
+	if len(Commands) == 0 {
+		return errors.New("empty commands")
+	}
+
 	if !*Foreground {
 		// fork the process to run in background
-		return startBackground(*Verbose)
+		return startBackground(watchFilePath)
 	}
 
 	var logFile *os.File
@@ -115,33 +118,6 @@ func isRoot() (bool, error) {
 		return false, err
 	}
 	return currentUser.Username == "root", nil
-}
-
-func startBackground(verbose bool) error {
-
-	executable, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	args := []string{
-		"-f",
-		"-log", executable + ".log",
-	}
-
-	if *Verbose {
-		args = append(args, "-v")
-	}
-
-	cmd := exec.Command(executable, args...)
-	fmt.Printf("Run cmd: %v\n", cmd)
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	fmt.Println("Daemon started in background. PID is : ", cmd.Process.Pid)
-	return nil
 }
 
 func containsFirstString(commands [][]string, value string) bool {

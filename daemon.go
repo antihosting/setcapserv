@@ -163,7 +163,6 @@ func (t *watchDaemon) trigger() {
 				t.log.Printf("Trigger: file locked '%s'\n", t.watchFilePath)
 				t.trigger()
 			} else {
-				t.log.Printf("Run: file '%s'\n", t.watchFilePath)
 				t.runCommands()
 			}
 		}
@@ -171,6 +170,8 @@ func (t *watchDaemon) trigger() {
 }
 
 func (t *watchDaemon) runCommands() {
+
+	t.log.Printf("Updated: '%s'\n", t.watchFilePath)
 
 	for _, command := range t.commands {
 
